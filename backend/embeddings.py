@@ -1,22 +1,18 @@
-from sentence_transformers import SentenceTransformer
-import faiss
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from bots import bots_data
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+corpus = []
+for bot in bots_data:
+    text = f"{bot['name']}. {bot['description']} Strengths: {', '.join(bot['strengths'])}. Tags: {', '.join(bot['tags'])}."
+    corpus.append(text)
 
-def build_index():
-    corpus = []
-    for bot in bots_data:
-        text = f"{bot['name']}. {bot['description']} Strengths: {', '.join(bot['strengths'])}. Tags: {', '.join(bot['tags'])}."
-        corpus.append(text)
-    
-    embeddings = model.encode(corpus, convert_to_numpy=True)
-    embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)  # normalize
-    
-    index = faiss.IndexFlatIP(embeddings.shape[1])  # Inner product = cosine on normalized vectors
-    index.add(embeddings)
-    
-    return index, corpus
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(corpus)
 
-index, corpus = build_index()
+def search(query: str, top_k: int = 3):
+    query_vec = vectorizer.transform([query])
+    scores = cosine_similarity(query_vec, tfidf_matrix).flatten()
+    top_indices = np.argsort(scores)[::-1][:top_k]
+    return [(int(i), float(scores[i])) for i in top_indices]
