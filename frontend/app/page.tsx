@@ -24,7 +24,7 @@ export default function Home() {
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/recommend"}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
